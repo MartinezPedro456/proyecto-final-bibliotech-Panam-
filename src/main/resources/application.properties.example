@@ -1,0 +1,4 @@
+
+db.url=jdbc:postgresql://TU_HOST:5432/postgres?sslmode=require
+db.user=postgres.proyecto 
+db.password=cambiar
