@@ -1,33 +1,45 @@
 package com.bibliotech.config;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class DatabaseInitializer {
+
     private static final Logger logger = Logger.getLogger(DatabaseInitializer.class.getName());
 
     public static void initialize() {
 
-        String sqlFilePath = "sql/01_schema.sql";
+        try (InputStream input = DatabaseInitializer.class
+                .getClassLoader()
+                .getResourceAsStream("sql/01_schema.sql")) {
 
-        try {
-            String sqlContent = Files.readString(Path.of(sqlFilePath));
-            Connection conn = DatabaseConnection.getInstance().getConnection();
-
-            try (Statement stmt = conn.createStatement()) {
-                stmt.execute(sqlContent);
-                logger.info("tablas creadas, verificadas automaticamente en supabase");
+            if (input == null) {
+                throw new IllegalStateException(
+                        "No se encontro sql/01_schema.sql");
             }
 
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "no se pudo leer el archivo sql en la ruta: " + sqlFilePath, e);
+            String sql = new String(
+                    input.readAllBytes(),
+                    StandardCharsets.UTF_8);
+
+            try (Connection conn = DatabaseConnection.getConnection();
+                    Statement stmt = conn.createStatement()) {
+
+                stmt.execute(sql);
+
+                logger.info(
+                        "Tablas de Bibliotech creadas correctamente");
+            }
+
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "error al ejecutar el script sql en la base de datos", e);
+            logger.log(
+                    Level.SEVERE,
+                    "Error al crear las tablas de Bibliotech",
+                    e);
         }
     }
 }
